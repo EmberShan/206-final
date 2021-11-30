@@ -36,21 +36,24 @@ def getNetWorth(names):
     key = getToken()
     networth = []
     for n in names:
-        api_url = 'https://api.celebrityninjas.com/v1/search?limit=1&name=' + n[1].lower()
+        # get the api request url
+        api_url = 'https://api.api-ninjas.com/v1/celebrity?name={}'.format(n[1].lower())
+        print(api_url)
         try: 
-            r = requests.get(api_url, headers={'X-Api-Key': 'TigkD6EtLk+TJiAJwEo8BQ==ulokFr8n2xdJt5Y2'} )
+            r = requests.get(api_url, headers={'X-Api-Key': key} )
             # check if the request succeeded
             if r.status_code == requests.codes.ok:
                 d = json.loads(r.text)
+                # create a list of tuples with name as the first and networth as the second element
+                networth.append(tuple(n[1], d['net_worth']))
+                
             else:
                 print("Error:", r.status_code, r.text)
                 return None
-            
-            # create a list of tuples with name as the first and networth as the second element
-            networth.append(tuple(n[1], d['net_worth']))
         except:
             print("No information about this singer found")
             return None
+
     return networth
 
 
@@ -59,21 +62,14 @@ def insertIntoDatabase():
 
 
 def main():
-    # # connect to the database
-    # dir_path = os.path.dirname(os.path.realpath(__file__))
-    # conn = sqlite3.connect(dir_path + '/' + "finalproject.db")
-    # cur = conn.cursor()
-    # # get the data and insert it into the database
-    # names = getNameList(cur, conn)
-    # print(getNetWorth(names))
+    # connect to the database
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    conn = sqlite3.connect(dir_path + '/' + "finalproject.db")
+    cur = conn.cursor()
+    # get the data and insert it into the database
+    names = getNameList(cur, conn)
+    print(getNetWorth(names))
 
-    api_url = 'https://api.celebrityninjas.com/v1/search?name='
-    name = 'michael jackson'
-    response = requests.get(api_url + name, headers={'X-Api-Key': 'TigkD6EtLk+TJiAJwEo8BQ==ulokFr8n2xdJt5Y2' })
-    if response.status_code == requests.codes.ok:
-        print(response.text)
-    else:
-        print("Error:", response.status_code, response.text)
 
 if __name__ == "__main__":
     main()
