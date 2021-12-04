@@ -2,7 +2,7 @@
 # Name: Ember Shan
 # This file is to get a list of 200 artists names from the website
 # And store them in the Artists table in the database 
-# a total of 200 artist names so a total of 8 times executing this code to add all items
+# a total of 200 artist names so a total of 10 times executing this code to add all items
 #############
 
 import os 
@@ -29,10 +29,12 @@ def createSoupFromFile():
 
 
 def getLastID(cur):
-    cur.execute('CREATE TABLE IF NOT EXISTS Artists (artist_id INTEGER PRIMARY KEY, name TEXT)')
+    # create the table if not exist
+    cur.execute('CREATE TABLE IF NOT EXISTS Artists (artist_id INTEGER PRIMARY KEY, name TEXT, fans_count INTEGER)')
     # checking what have already been stored to the database
     # get the last row of the database
-    cur.execute('SELECT artist_id, name FROM Artists ORDER BY artist_id DESC LIMIT 1')
+    # change the table name if expecting to get the id from other tables
+    cur.execute('SELECT artist_id FROM Artists ORDER BY artist_id DESC LIMIT 1')
     row = cur.fetchone()
     # check if this is the first time inserting any data
     if row: 
@@ -47,6 +49,7 @@ def getLastID(cur):
 
 def getData(soup, cur, conn):
     names = []
+    fans = []
     start = getLastID(cur)
 
     table = soup.find('table')
@@ -56,17 +59,19 @@ def getData(soup, cur, conn):
         # scraping only 25 elements from the website
         for r in rows[start + 1: start + 21]:
             name_cols = r.find('td', class_ = "name")
+            fan = r.find('td', class_ = 'count').text.split()[2]
             names.append(name_cols.text.strip('\n'))
+            fans.append(fan)
 
     # create the artist database 
-    createArtistDatabase(cur, conn, names, start)
+    createArtistDatabase(cur, conn, names, fans, start)
 
 
-def createArtistDatabase(cur, conn, names, start):
+def createArtistDatabase(cur, conn, names, fans, start):
     # iteraing through the scraped data and insert them into the database
     for i in range(0, len(names)): 
-        cur.execute('INSERT OR IGNORE INTO Artists (artist_id, name) VALUES (?, ?)', \
-            (start+1, names[i].strip('\n')))
+        cur.execute('INSERT OR IGNORE INTO Artists (artist_id, name, fans_count) VALUES (?, ?, ?)', \
+            (start+1, names[i], fans[i]))
         start += 1
     conn.commit()
 
